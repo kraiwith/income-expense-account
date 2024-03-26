@@ -82,7 +82,7 @@ function AccountList(props) {
           <thead>
             <tr>
               <th className="text-center">
-                วันที่ <i className="fa-solid fa-chevron-down"></i>
+                วันที่ <i className="fa-solid fa-sort-down"></i>
               </th>
               <th className="text-center">รายการ</th>
               <th className="text-center">จำนวน</th>
