@@ -1,0 +1,9 @@
+.form-control {
+  width: 100%;
+  max-width: 170px;
+}
+
+.form-select {
+  width: auto;
+  max-width: 170px;
+}
