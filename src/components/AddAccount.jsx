@@ -1,8 +1,11 @@
-import { useState } from 'react';
-import { PAY_TYPES } from '../constants/pay-type';
+import { useContext, useState } from 'react';
+import { PAY_TYPES } from '../constants/pay-types';
 import { CATEGORIES } from '../constants/categories';
+import { AccountContext } from '../contexts/account-context';
 
-function AddAccount(props) {
+function AddAccount() {
+  const accountContext = useContext(AccountContext);
+
   const [date, setDate] = useState('');
   const [income, setIncome] = useState(true);
   const [amount, setAmount] = useState(0);
@@ -12,12 +15,12 @@ function AddAccount(props) {
   const onSubmitHandler = (event) => {
     event.preventDefault();
 
-    props.onAddNewAccount({ date, income, amount, category, payType });
+    accountContext.addAccount({ date, income, amount, category, payType });
     resetValue();
   };
 
   const onClickBtnCancel = () => {
-    props.onClickCancel();
+    accountContext.cancelAddAccount();
     resetValue();
   };
 

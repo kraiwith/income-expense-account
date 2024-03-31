@@ -1,14 +1,22 @@
 import { useState } from 'react';
 import AccountItem from './AccountItem';
 import { CATEGORIES } from '../constants/categories';
-import { PAY_TYPES } from '../constants/pay-type';
+import { PAY_TYPES } from '../constants/pay-types';
+
+const dateToNumber = (date) => {
+  const currentDate = new Date(date);
+  const day = currentDate.getDate();
+  const month = currentDate.getMonth() + 1;
+  const year = currentDate.getFullYear();
+
+  const formattedDay = day < 10 ? '0' + day : day;
+  const formattedMonth = month < 10 ? '0' + month : month;
+
+  const formattedDate = +`${year}${formattedMonth}${formattedDay}`;
+  return formattedDate;
+};
 
 function AccountList(props) {
-  const getDateNumber = (date) => {
-    const newDate = new Date(date);
-    return `${newDate.getFullYear()}${newDate.getMonth() + 1}${newDate.getDate()}`;
-  };
-
   const [filterIncome, setFilterIncome] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterPayType, setFilterPayType] = useState('all');
@@ -24,7 +32,7 @@ function AccountList(props) {
     clonedAccountList = clonedAccountList.filter((acc) => acc.payType == filterPayType);
   }
 
-  const sortedCloneAccountList = clonedAccountList.sort((a, b) => getDateNumber(a.date) - getDateNumber(b.date));
+  const sortedCloneAccountList = clonedAccountList.sort((a, b) => dateToNumber(a.date) - dateToNumber(b.date));
 
   return (
     <div className="">
@@ -101,8 +109,6 @@ function AccountList(props) {
                 amount={item.amount}
                 category={item.category}
                 payType={item.payType}
-                onEditAccount={props.onEditAccount}
-                onDeleteAtAccount={props.onDeleteAtAccount}
               ></AccountItem>
             ))}
           </tbody>

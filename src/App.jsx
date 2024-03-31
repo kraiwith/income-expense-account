@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useReducer, useState } from 'react';
 // import reactLogo from './assets/react.svg';
 // import viteLogo from '/vite.svg';
 import './App.css';
 import AccountList from './components/AccountList';
 import { CATEGORY_VALUES } from './constants/categories';
-import { PAY_TYPE_VALUES } from './constants/pay-type';
+import { PAY_TYPE_VALUES } from './constants/pay-types';
 import AddAccount from './components/AddAccount';
+import { AccountContext } from './contexts/account-context';
 
 let uniqueId = 0;
 
@@ -14,101 +15,135 @@ const getUniqueId = () => {
   return uniqueId;
 };
 
+const INITIAL_ACCOUNT_LIST = [
+  {
+    id: getUniqueId(),
+    date: '2024-03-01',
+    income: true,
+    amount: 9500,
+    category: CATEGORY_VALUES.SALARY,
+    payType: '',
+  },
+  {
+    id: getUniqueId(),
+    date: '2024-03-05',
+    income: false,
+    amount: 100,
+    category: CATEGORY_VALUES.FOOD,
+    payType: PAY_TYPE_VALUES.CASH,
+  },
+  {
+    id: getUniqueId(),
+    date: '2024-03-07',
+    income: false,
+    amount: 1500,
+    category: CATEGORY_VALUES.REWARD,
+    payType: PAY_TYPE_VALUES.CREDIT_CARD,
+  },
+  {
+    id: getUniqueId(),
+    date: '2024-03-12',
+    income: false,
+    amount: 300,
+    category: CATEGORY_VALUES.F2P,
+    payType: PAY_TYPE_VALUES.CREDIT_CARD,
+  },
+  {
+    id: getUniqueId(),
+    date: '2024-03-26',
+    income: true,
+    amount: 300,
+    category: CATEGORY_VALUES.SALE_ONLINE,
+    payType: '',
+  },
+];
+
+function reducer(state, action) {
+  if (action.type === 'add_account') {
+    return [...state, { id: getUniqueId(), ...action.newAccount }];
+  } else if (action.type === 'delete_account') {
+    const filtereds = state.filter((item) => item.id !== action.deleteId);
+    return [...filtereds];
+  } else if (action.type === 'edit_account') {
+    const findIndex = state.findIndex((acc) => acc.id === action.editId);
+    state[findIndex] = { ...action.editAccount };
+    return [...state];
+  }
+}
+
 function App() {
-  const INITIAL_ACCOUNT_LIST = [
-    {
-      id: getUniqueId(),
-      date: '2024-03-1',
-      income: true,
-      amount: 9500,
-      category: CATEGORY_VALUES.SALARY,
-      payType: '',
-    },
-    {
-      id: getUniqueId(),
-      date: '2024-03-5',
-      income: false,
-      amount: 100,
-      category: CATEGORY_VALUES.FOOD,
-      payType: PAY_TYPE_VALUES.CASH,
-    },
-    {
-      id: getUniqueId(),
-      date: '2024-03-7',
-      income: false,
-      amount: 1500,
-      category: CATEGORY_VALUES.REWARD,
-      payType: PAY_TYPE_VALUES.CREDIT_CARD,
-    },
-    {
-      id: getUniqueId(),
-      date: '2024-03-12',
-      income: false,
-      amount: 300,
-      category: CATEGORY_VALUES.F2P,
-      payType: PAY_TYPE_VALUES.CREDIT_CARD,
-    },
-    {
-      id: getUniqueId(),
-      date: '2024-03-26',
-      income: true,
-      amount: 300,
-      category: CATEGORY_VALUES.SALE_ONLINE,
-      payType: '',
-    },
-  ];
-  const [accountList, setAccountList] = useState(INITIAL_ACCOUNT_LIST);
+  const getInitialAccountList = () => () => {
+    const account_list = JSON.parse(localStorage.getItem('account_list'));
+    if (account_list) {
+      // run uniqid to fix refresh uniqid clear and key id duplicate
+      account_list.forEach(() => getUniqueId());
+      return account_list;
+    }
+    return INITIAL_ACCOUNT_LIST;
+  };
+  const [accountList, accountListDispatch] = useReducer(reducer, {}, getInitialAccountList());
   const [isShow, setIsShow] = useState(false);
 
-  const addAccount = (newAccountData) => {
-    const newAccount = {
-      ...newAccountData,
-      id: getUniqueId(),
-    };
-    setAccountList((accountList) => [...accountList, { ...newAccount }]);
-    setIsShow(false);
-  };
+  useEffect(() => {
+    localStorage.setItem('account_list', JSON.stringify(accountList));
+  }, [accountList]);
 
   const cancelAddAccount = () => {
     setIsShow(false);
   };
 
+  const addAccount = (newAccountData) => {
+    accountListDispatch({
+      type: 'add_account',
+      newAccount: newAccountData,
+    });
+    cancelAddAccount();
+  };
+
   const deleteAccount = (id) => {
-    const conf = confirm('ยืนยันการลบข้อมูล');
+    const conf = confirm('ยืนยันการลบข้อมูล!');
     if (!conf) {
       return;
     }
 
-    const filtereds = accountList.filter((item) => item.id !== id);
-    setAccountList(filtereds);
+    accountListDispatch({
+      type: 'delete_account',
+      deleteId: id,
+    });
   };
 
   const editAccount = (id, account) => {
-    const findIndex = accountList.findIndex((acc) => acc.id === id);
-    const newAccountList = [...accountList];
-    newAccountList[findIndex] = { ...account, id };
-    setAccountList(newAccountList);
+    accountListDispatch({
+      type: 'edit_account',
+      editId: id,
+      editAccount: account,
+    });
   };
 
   return (
     <>
-      <div className="container-fluid py-5">
-        <AccountList
-          accountList={accountList}
-          onDeleteAtAccount={deleteAccount}
-          onEditAccount={editAccount}
-        ></AccountList>
+      <AccountContext.Provider
+        value={{
+          addAccount: addAccount,
+          deleteAccountAt: deleteAccount,
+          editAccountAt: editAccount,
+          cancelAddAccount: cancelAddAccount,
+        }}
+      >
+        <div className="container-fluid py-5">
+          <AccountList accountList={accountList}></AccountList>
 
-        {isShow ? (
-          <AddAccount onAddNewAccount={addAccount} onClickCancel={cancelAddAccount} />
-        ) : (
-          <div className="mb-3">
-            <button type="button" className="btn btn-success" onClick={() => setIsShow(true)}>
-              สร้างรายการใหม่
-            </button>
-          </div>
-        )}
-      </div>
+          {isShow ? (
+            <AddAccount />
+          ) : (
+            <div className="mb-3">
+              <button type="button" className="btn btn-success" onClick={() => setIsShow(true)}>
+                สร้างรายการใหม่
+              </button>
+            </div>
+          )}
+        </div>
+      </AccountContext.Provider>
     </>
   );
 }

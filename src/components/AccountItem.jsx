@@ -1,11 +1,16 @@
-import { useState } from 'react';
-import { getDate } from '../utils/get-date';
-import { PAY_TYPES } from '../constants/pay-type';
+import { useContext, useState } from 'react';
+import { PAY_TYPES } from '../constants/pay-types';
 import { CATEGORIES } from '../constants/categories';
+import { AccountContext } from '../contexts/account-context';
 
 function AccountItem(props) {
-  console.log(`✨ AccountItem ~ props:`, props);
-  const showDate = getDate(props.date);
+  const accountContext = useContext(AccountContext);
+
+  const showDate = Intl.DateTimeFormat('en-US', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(props.date));
   const showAmount = Intl.NumberFormat('th', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
     props.amount
   );
@@ -14,6 +19,7 @@ function AccountItem(props) {
 
   const onClickEditHandler = () => {
     setEditing(true);
+    setId(props.id);
     setDate(props.date);
     setIncome(props.income);
     setAmount(props.amount);
@@ -26,11 +32,12 @@ function AccountItem(props) {
   };
 
   const onSubmitEdit = () => {
-    const editAccount = { date, income, amount, category, payType };
-    props.onEditAccount(props.id, editAccount);
+    const editAccount = { id, date, income, amount, category, payType };
+    accountContext.editAccountAt(props.id, editAccount);
     onCancelEditHandler();
   };
 
+  const [id, setId] = useState(undefined);
   const [date, setDate] = useState('');
   const [income, setIncome] = useState(false);
   const [amount, setAmount] = useState(0);
@@ -113,7 +120,11 @@ function AccountItem(props) {
             <button type="button" className="btn btn-warning m-1" onClick={() => onClickEditHandler()}>
               แก้ไข
             </button>
-            <button type="button" className="btn btn-danger m-1" onClick={() => props.onDeleteAtAccount(props.id)}>
+            <button
+              type="button"
+              className="btn btn-danger m-1"
+              onClick={() => accountContext.deleteAccountAt(props.id)}
+            >
               ลบ
             </button>
           </td>
